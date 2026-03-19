@@ -167,8 +167,8 @@ function processPointCSV(name,text){
 }
 
 function buildPointCSV(results){
-  const rows=[[q("メール"),q("広告コード"),q("ポイント")].join(",")];
-  for(const r of results)for(const email of r.emails)rows.push([q(email),q(r.adCode),q("0")].join(","));
+  const rows=[["メール","広告コード","ポイント"].join(",")];
+  for(const r of results)for(const email of r.emails)rows.push([email,r.adCode,"0"].join(","));
   return rows.join("\r\n");
 }
 
