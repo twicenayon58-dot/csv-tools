@@ -129,7 +129,7 @@ function downloadCSV(content,filename){
 
 // ====== 各ツール処理 ======
 function processMailCSV(name,text){
-  const adCode=name.replace(/\.csv$/i,"");
+  const adCode=toAdCode(name);
   const rows=parseCSV(text);
   let mobile=[],pc=[],skip=0;
   for(const row of rows){
@@ -280,10 +280,18 @@ async function handleFiles(files){
 
   for(const f of newFiles){
     const text=await new Promise(res=>{
-      const reader=new FileReader();
-      reader.onload=e=>res(e.target.result);
-      reader.onerror=()=>res("");
-      reader.readAsText(f,"Shift_JIS");
+      // BOMチェックでUTF-8かShift_JISか自動判定
+      const r1=new FileReader();
+      r1.onload=e=>{
+        const bytes=new Uint8Array(e.target.result);
+        const enc=(bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF)?"UTF-8":"Shift_JIS";
+        const r2=new FileReader();
+        r2.onload=e2=>res(e2.target.result);
+        r2.onerror=()=>res("");
+        r2.readAsText(f,enc);
+      };
+      r1.onerror=()=>res("");
+      r1.readAsArrayBuffer(f);
     });
     let result;
     if(currentTool==="mail")result=processMailCSV(f.name,text);
