@@ -311,9 +311,23 @@ function parseCSV(text) {
 let allResults = [];
 
 function processFile(name, text) {
-  const adCode = toAdCode(name);
   const rows = parseCSV(text);
   let mobileEmails = [], pcEmails = [], skipCount = 0;
+
+  // H列（index=7）に広告コードがあるか確認
+  let hColAdCode = null;
+  for (const row of rows) {
+    const hVal = (row[7] || "").trim();
+    if (hVal && !EMAIL_RE.test(hVal) && hVal !== "広告コード") {
+      hColAdCode = hVal;
+      break;
+    }
+  }
+
+  // H列に値があればそれを引き継ぎ、なければファイル名から生成
+  const adCode = hColAdCode
+    ? "KAIUN_" + hColAdCode
+    : toAdCode(name);
 
   for (const row of rows) {
     // 全列をスキャンしてメールアドレスを探す
