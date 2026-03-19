@@ -237,6 +237,52 @@ const REJECT_LIST = new Set([
 ]);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// ====== ローマ字変換 ======
+const KANA_MAP = [
+  ["きゃ","kya"],["きゅ","kyu"],["きょ","kyo"],
+  ["しゃ","sha"],["しゅ","shu"],["しょ","sho"],["し","shi"],
+  ["ちゃ","cha"],["ちゅ","chu"],["ちょ","cho"],["ち","chi"],
+  ["つ","tsu"],["にゃ","nya"],["にゅ","nyu"],["にょ","nyo"],
+  ["ひゃ","hya"],["ひゅ","hyu"],["ひょ","hyo"],
+  ["みゃ","mya"],["みゅ","myu"],["みょ","myo"],
+  ["りゃ","rya"],["りゅ","ryu"],["りょ","ryo"],
+  ["ぎゃ","gya"],["ぎゅ","gyu"],["ぎょ","gyo"],
+  ["じゃ","ja"],["じゅ","ju"],["じょ","jo"],["じ","ji"],
+  ["びゃ","bya"],["びゅ","byu"],["びょ","byo"],
+  ["ぴゃ","pya"],["ぴゅ","pyu"],["ぴょ","pyo"],
+  ["ふ","fu"],["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"],
+  ["か","ka"],["き","ki"],["く","ku"],["け","ke"],["こ","ko"],
+  ["さ","sa"],["す","su"],["せ","se"],["そ","so"],
+  ["た","ta"],["て","te"],["と","to"],
+  ["な","na"],["に","ni"],["ぬ","nu"],["ね","ne"],["の","no"],
+  ["は","ha"],["ひ","hi"],["へ","he"],["ほ","ho"],
+  ["ま","ma"],["み","mi"],["む","mu"],["め","me"],["も","mo"],
+  ["や","ya"],["ゆ","yu"],["よ","yo"],
+  ["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"],
+  ["わ","wa"],["を","o"],["ん","n"],
+  ["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],
+  ["ざ","za"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],
+  ["だ","da"],["ぢ","ji"],["づ","zu"],["で","de"],["ど","do"],
+  ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"],
+  ["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"],
+  ["っ","tt"],["ー","_"],["　","_"],[" ","_"],
+];
+function toRomaji(str) {
+  let s = str.replace(/[\u30A1-\u30F6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).toLowerCase();
+  for (const [k, r] of KANA_MAP) s = s.split(k).join(r);
+  return s;
+}
+function toAdCode(filename) {
+  let n = filename.replace(/\.csv$/i, "");
+  n = toRomaji(n);
+  n = n.replace(/-/g, "_");
+  n = n.replace(/[^a-zA-Z0-9_]/g, "");
+  n = n.replace(/^_+|_+$/g, "");
+  n = n.replace(/_+/g, "_");
+  return "KAIUN_" + (n || "adcode");
+}
+
+
 
 function isMobile(email) {
   const domain = (email.split("@")[1] || "").toLowerCase();
@@ -265,21 +311,23 @@ function parseCSV(text) {
 let allResults = [];
 
 function processFile(name, text) {
-  const adCode = "KAIUN_" + name.replace(/\.csv$/i, "");
+  const adCode = toAdCode(name);
   const rows = parseCSV(text);
   let mobileEmails = [], pcEmails = [], skipCount = 0;
 
   for (const row of rows) {
-    const cell = (row[0] || "").trim();
-    if (!EMAIL_RE.test(cell)) continue;
-    const email = cell.toLowerCase();
-    if (isMobile(email)) {
-      mobileEmails.push(email);
-    } else {
-      if (REJECT_LIST.has(email)) {
-        skipCount++;
+    // 全列をスキャンしてメールアドレスを探す
+    for (const cell of row.map(c => (c||"").trim())) {
+      if (!EMAIL_RE.test(cell)) continue;
+      const email = cell.toLowerCase();
+      if (isMobile(email)) {
+        mobileEmails.push(email);
       } else {
-        pcEmails.push(email);
+        if (REJECT_LIST.has(email)) {
+          skipCount++;
+        } else {
+          pcEmails.push(email);
+        }
       }
     }
   }
