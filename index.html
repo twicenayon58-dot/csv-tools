@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>広告CSV整形ツール</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/encoding-japanese/2.1.0/encoding.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0a0a;color:#e0e0e0;font-family:'Courier New',Menlo,monospace;padding:32px 28px;min-height:100vh}
@@ -120,8 +121,14 @@ function findPhoneColumn(rows){
 function getTodayStr(){const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;}
 function q(s){return `"${(s||"").replace(/"/g,'""')}"` ;}
 
-function downloadCSV(content,filename){
-  const blob=new Blob(["\uFEFF"+content],{type:"text/csv;charset=utf-8;"});
+function downloadCSV(content,filename,useShiftJis){
+  let blob;
+  if(useShiftJis&&typeof Encoding!=="undefined"){
+    const codes=Encoding.convert(Encoding.stringToCode(content),{to:"SJIS",from:"UNICODE"});
+    blob=new Blob([new Uint8Array(codes)],{type:"text/csv;charset=shift_jis;"});
+  }else{
+    blob=new Blob(["\uFEFF"+content],{type:"text/csv;charset=utf-8;"});
+  }
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");a.href=url;a.download=filename;a.click();
   URL.revokeObjectURL(url);
@@ -268,7 +275,8 @@ function doDownload(){
   if(currentTool==="mail")csv=buildMailCSV(results);
   if(currentTool==="point")csv=buildPointCSV(results);
   if(currentTool==="sms")csv=buildSmsCSV(results);
-  downloadCSV(csv,today+cfg.suffix);
+  const useShiftJis=(currentTool==="point");
+  downloadCSV(csv,today+cfg.suffix,useShiftJis);
 }
 
 async function handleFiles(files){
