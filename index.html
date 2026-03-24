@@ -125,10 +125,10 @@ function toShiftJIS(str){
   // 簡易実装: latin1範囲はそのまま、日本語はUTF-8で保持してBlobのcharsetに任せる
   return new Blob([str],{type:"text/plain;charset=shift_jis;"});
 }
-function downloadCSV(content,filename,useShiftJis){
+function downloadCSV(content,filename,noBom){
   let blob;
-  if(useShiftJis){
-    blob=new Blob([content],{type:"text/csv;charset=shift_jis;"});
+  if(noBom){
+    blob=new Blob([content],{type:"text/csv;charset=utf-8;"});
   }else{
     blob=new Blob(["\uFEFF"+content],{type:"text/csv;charset=utf-8;"});
   }
@@ -278,8 +278,9 @@ function doDownload(){
   if(currentTool==="mail")csv=buildMailCSV(results);
   if(currentTool==="point")csv=buildPointCSV(results);
   if(currentTool==="sms")csv=buildSmsCSV(results);
-  const useShiftJis=(currentTool==="point");
-  downloadCSV(csv,today+cfg.suffix,useShiftJis);
+  // point・smsはBOMなしUTF-8、mailはBOM付きUTF-8
+  const noBom=(currentTool==="point"||currentTool==="sms");
+  downloadCSV(csv,today+cfg.suffix,noBom);
 }
 
 async function handleFiles(files){
