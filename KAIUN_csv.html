@@ -361,11 +361,11 @@ function buildMergedCSV(results) {
   for (const r of results) {
     // モバイル行: A=あなた, B空, C空, D=アドレス, E空, F空, G空, H=広告コード
     for (const mob of r.mobile) {
-      rows.push([q("あなた"), q(""), q(""), q(mob), q(""), q(""), q(""), q(r.adCode)].join(","));
+      rows.push(["あなた","","",mob,"","","",r.adCode].join(","));
     }
     // PC行: A=あなた, B空, C空, D空, E=アドレス, F空, G空, H=広告コード
     for (const pc of r.pc) {
-      rows.push([q("あなた"), q(""), q(""), q(""), q(pc), q(""), q(""), q(r.adCode)].join(","));
+      rows.push(["あなた","","","",pc,"","",r.adCode].join(","));
     }
   }
   return rows.join("\r\n");
