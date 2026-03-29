@@ -278,9 +278,8 @@ function doDownload(){
   if(currentTool==="mail")csv=buildMailCSV(results);
   if(currentTool==="point")csv=buildPointCSV(results);
   if(currentTool==="sms")csv=buildSmsCSV(results);
-  // point・smsはBOMなしUTF-8、mailはBOM付きUTF-8
-  const noBom=(currentTool==="point"||currentTool==="sms");
-  downloadCSV(csv,today+cfg.suffix,noBom);
+  // 全ツールBOMなしUTF-8
+  downloadCSV(csv,today+cfg.suffix,true);
 }
 
 async function handleFiles(files){
